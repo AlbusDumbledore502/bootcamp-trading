@@ -1,0 +1,502 @@
+{% extends 'main/base.html' %}
+{% load widget_tweaks %}
+{% block content %}
+    {% include 'main/layouts/user_navbar.html' %}
+    {% include 'main/layouts/user_sidebar.html' %}
+    <div class="content-body">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-xl-3 col-lg-3 col-md-3 col-xxl-3">
+                    <div class="card">
+                        <div class="card-body market-limit ps">
+                            <div class="tab-content">
+                                <div id="limit" class="tab-pane fade show active">
+                                    <form method="POST">
+                                        <div class="form-group">
+                                            <div class="input-group mb-3">
+                                                <select name="market" id="market-select" class="form-control mw-200" style="display: none;">
+                                                    <option value="NASDAQ">NASDAQ</option>
+                                                </select>
+                                                <select name="stock" id="stock-select" class="form-control mw-200" style="display: none;">
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="form-group stock-price">
+                                            <div class="input-group">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text">
+                                                        USD/Unit
+                                                    </span>
+                                                </div>
+                                                <input class="form-control text-right" id="stock-unit-price" type="text" value="" readonly>
+                                            </div>
+                                        </div>
+                                        <div class="btn-group btn-block mt-3">
+                                            <button class="btn btn-success waves-effect" type="button" id="stock-buy-btn">Buy Now</button>
+                                            <button class="btn btn-danger waves-effect" type="button" id="stock-sell-btn">Sell Now</button>
+                                        </div>
+                                        <div class="trading-form" style="display: none;">
+                                            <div class="form-group stock-price">
+                                                <div class="input-group">
+                                                    <div class="input-group-prepend">
+                                                        <span class="input-group-text">
+                                                            Quantity
+                                                        </span>
+                                                    </div>
+                                                    <input class="form-control text-right" type="number" step="0.0001" value="0" id="stock-quantity">
+                                                </div>
+                                            </div>
+                                            <div class="form-group stock-price">
+                                                <div class="input-group">
+                                                    <div class="input-group-prepend">
+                                                        <span class="input-group-text">
+                                                            Value
+                                                        </span>
+                                                    </div>
+                                                    <input class="form-control text-right" type="number" step="0.0001" value="0" id="stock-value">
+                                                </div>
+                                            </div>
+                                            <div class="d-flex justify-content-between mt-3 input-group">
+                                                <p class="mb-0 user-stock-description"></p>
+                                                <h6 class="mb-0 user-stock-value"></h6>
+                                            </div>
+                                            <div class="btn-group btn-block mt-3 stock-action-div">
+                                    
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-9 col-lg-9 col-md-9 col-xxl-9">
+                    <div id="stock-card">
+
+                    </div>
+                </div>
+                <div class="col-xl-12 col-lg-12 col-md-12 col-xxl-12">
+                    <div clss="card">
+                        <div class="card-header">
+                            <h4 class="card-title">Trade History</h4>
+                        </div>
+                        <div class="card-body">
+                            <div class="transaction-table">
+                                <div class="table-responsive">
+                                    <table class="table table-striped mb-0 table-responsive-sm" id="trade-history-table">
+                                        <tbody>
+                                            <tr>
+                                                <th>
+                                                    
+                                                </th>
+                                                <th>
+                                                    Status
+                                                </th>
+                                                <th>
+                                                    Stock
+                                                </th>
+                                                <th>
+                                                    Date
+                                                </th>
+                                                <th>
+                                                    Payment mode
+                                                </th>
+                                                <th>
+                                                    Unit
+                                                </th>
+                                                <th>
+                                                    @
+                                                </th>
+                                                <th>
+                                                    Total
+                                                </th>
+                                            </tr>
+                                            {% for trade in trade_history %}
+                                            <tr>
+                                                <td>
+                                                    {% if trade.type == 'Buy' %}
+                                                        <span class="buy-thumb"><i class="mdi mdi-arrow-up"></i></span>
+                                                    {% else %}
+                                                        <span class="sold-thumb"><i class="mdi mdi-arrow-down"></i></span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    {% if trade.type == 'Buy' %}
+                                                        <span class="badge badge-success p-2">Buy</span>
+                                                    {% else %}
+                                                        <span class="badge badge-danger p-2">Sold</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    {{ trade.stock }}
+                                                </td>
+                                                <td>
+                                                    {{ tarde.date }}
+                                                </td>
+                                                <td>
+                                                    Using - {{ trade.payment_mode }} {{ trade.payment_description }}
+                                                </td>
+                                                <td>
+                                                    {{ trade.units }}
+                                                </td>
+                                                <td>
+                                                    {{ trade.unit_price}}
+                                                </td>
+                                                {% if trade.type == 'Buy' %}
+                                                    <td class="text-danger"> {{ trade.total_price }}</td>
+                                                {% else %}
+                                                    <td class="text-success"> {{ trade.total_price }}</td>
+                                                {% endif %}   
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-12 col-lg-12 col-md-12 col-xxl-12">
+                    <div id="portfolio-card">
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+{% block customjs %}
+<script>
+
+    function loadOptions(market){
+
+        var options = {
+            'NASDAQ': ["MSFT", "AAPL"]
+        };
+
+        stock_options = options[market];
+        html_str = "";
+        for(i=0; i<stock_options.length; i++){
+            html_str += "<option value="+stock_options[i]+" >"+stock_options[i]+"</option>";
+        }
+        $("#stock-select").html(html_str);
+        $("#stock-select").niceSelect('update');
+    }
+
+    function updateUnitPrice(price){
+        $('.stock-price').find('#stock-unit-price').val(price);
+    }
+
+    function createStockGraph(stock, data){
+        var ohlc = data['ohlc'];
+        var volume = data['volume'];
+        var groupingUnits = [[
+                'week',
+                [1]                             
+            ], [
+                'month',
+                [1, 2, 3, 4, 6]
+        ]]
+        // console.log(ohlc);
+        // console.log(volume);
+        Highcharts.stockChart('stock-card', {
+
+            rangeSelector: {
+                selected: 1
+            },
+
+            title: {
+                text: stock + ' Historical'
+            },
+
+            yAxis: [{
+                labels: {
+                    align: 'right',
+                    x: -3
+                },
+                title: {
+                    text: 'OHLC'
+                },
+                height: '60%',
+                lineWidth: 2,
+                resize: {
+                    enabled: true
+                }
+            }, {
+                labels: {
+                    align: 'right',
+                    x: -3
+                },
+                title: {
+                    text: 'Volume'
+                },
+                top: '65%',
+                height: '35%',
+                offset: 0,
+                lineWidth: 2
+            }],
+
+            tooltip: {
+                split: true
+            },
+
+            series: [{
+                type: 'candlestick',
+                name: stock,
+                data: ohlc,
+                dataGrouping: {
+                    units: groupingUnits
+                }
+            }, {
+                type: 'column',
+                name: 'Volume',
+                data: volume,
+                yAxis: 1,
+                dataGrouping: {
+                    units: groupingUnits
+                }
+            }]
+        });
+    }
+
+    function loadStockChart(stock) {
+        console.log(window.location.href.replace('dashboard', 'stock/api'));
+        $.ajax({
+            url: window.location.href.replace('dashboard', 'stock/api'),
+            type: 'GET',
+            data: {'stock': stock},
+            success: function(data){
+                updateUnitPrice(data['unit_price']);
+                createStockGraph(stock, data);
+            }
+        })
+    };
+    
+    function createPortfolioGraph(data){
+        Highcharts.chart('portfolio-card', {
+            chart: {
+                zoomType: 'x'
+            },
+            title: {
+                text: 'Trade Portfolio'
+            },
+            xAxis: {
+                type: 'datetime'
+            },
+            yAxis: {
+                title: {
+                    text: 'Balance'
+                }
+            },
+            legend: {
+                enabled: false
+            },
+
+            series: [{
+                type: 'line',
+                name: 'Balance',
+                data: data
+            }]
+        });
+    };
+
+    function loadPortfolioChart() {
+        $.ajax({
+            url: window.location.href.replace('dashboard', 'stock/user/portfolio/api'),
+            type: 'GET',
+            data: {},
+            success: function(data){
+                createPortfolioGraph(data['portfolio']);
+            }
+        })
+    };
+
+    function updateStockValue(quantity) {
+        var unit_price = $('#stock-unit-price').val();
+        unit_price = parseFloat(unit_price);
+        quantity = parseFloat(quantity);
+        var value = (unit_price * quantity).toFixed(2);
+        $('#stock-value').val(value);
+        var available_balance = parseFloat($('.user-balance').find('.available span').text().split(" ")[0])
+        if(available_balance < value) {
+            $('#buy-stock-action').prop('disabled', true);
+        } else {
+            $('#buy-stock-action').prop('disabled', false);   
+        }
+    }
+
+    function updateStockQuantity(value) {
+        var unit_price = $('#stock-unit-price').val();
+        unit_price = parseFloat(unit_price);
+        value = parseFloat(value);
+        if(unit_price){
+            quantity = (value / unit_price).toFixed(2);
+            $('#stock-quantity').val(quantity);
+        } else {
+            $('#stock-quantity').val(0);
+        };
+        
+    }
+
+    function updateBuyHistory(trade) {
+        if(trade['type'] == "Buy"){
+            var row_string = '<tr><td><span class="buy-thumb"><i class="mdi mdi-arrow-up"></i></span></td><td><span class="badge badge-success p-2">Buy</span></td><td>' + trade['stock'] + '</td><td>' + trade['date'] + '</td><td> Using - ' + trade['payment_mode'] + trade['payment_description'] + '</td><td>' + trade['units'] + '</td><td>' + trade['unit_price'] + '</td><td class="text-danger">' + trade['total_price'] + '</td></tr>';
+        } else {
+            var row_string = '<tr><td><span class="sold-thumb"><i class="mdi mdi-arrow-down"></i></span></td><td><span class="badge badge-danger p-2">Sold</span></td><td>' + trade['stock'] + '</td><td>' + trade['date'] + '</td><td> Using - ' + trade['payment_mode'] + trade['payment_description'] + '</td><td>' + trade['units'] + '</td><td>' + trade['unit_price'] + '</td><td class="text-success">' + trade['total_price'] + '</td></tr>';
+        }
+        $('#trade-history-table tr:last').after(row_string);       
+    }
+
+    function buyStocks() {
+        stock = $('#stock-select').val();
+        unit_price = $('#stock-unit-price').val();
+        quantity = $('#stock-quantity').val();
+        value = $('#stock-value').val();
+        $.ajax({
+            url: window.location.href.replace('dashboard', 'stock/buy/api'),
+            type: 'GET',
+            data: {
+                'stock': stock,
+                'unit_price': unit_price,
+                'quantity': quantity,
+                'value': value 
+            },
+            success: function(data){
+                console.log("success");
+                console.log(data['trade'])
+                updateBuyHistory(data['trade'])
+                $('.trading-form').find('.user-stock-value').text("USD " + data['updated_balance']);
+                $('.user-balance').find('.available span').text(data['updated_balance'] + " USD");
+            }
+        });
+    };
+
+    function sellStocks() {
+        available_units = parseFloat($('.user-stock-value').text())
+        stock = $('#stock-select').val();
+        unit_price = $('#stock-unit-price').val();
+        quantity = $('#stock-quantity').val();
+        value = $('#stock-value').val();
+        $.ajax({
+            url: window.location.href.replace('dashboard', 'stock/sell/api'),
+            type: 'GET',
+            data: {
+                'stock': stock,
+                'unit_price': unit_price,
+                'quantity': quantity,
+                'value': value 
+            },
+            success: function(data){
+                console.log("success");
+                console.log(data['trade'])
+                updateBuyHistory(data['trade'])
+                $('.trading-form').find('.user-stock-value').text("USD " + data['updated_balance']);
+                $('.user-balance').find('.available span').text(data['updated_balance'] + " USD");
+                remaining_units = available_units - parseFloat(quantity);
+                $('.user-stock-value').text(remaining_units);
+            }
+        });
+    };
+
+    function updateTradeForm(mode) {
+        if (mode == "buy") {
+            var available_balance = $('.user-balance').find('.available span').text().split(" ")[0];
+            $('.trading-form').find('.user-stock-description').text("Available Balance")
+            $('.trading-form').find('.user-stock-value').text("USD " + available_balance)
+            $('.trading-form').find('.stock-action-div').html('<button class="btn btn-success waves-effect" type="button" name="buy" id="buy-stock-action">Buy</button>');
+        } else if(mode == "sell") {
+            var stock = $('#stock-select').val();
+            $('.trading-form').find('.user-stock-description').text("Available Units");
+            $.ajax({
+            url: window.location.href.replace('dashboard', 'stock/user/units/api'),
+                type: 'GET',
+                data: {'stock': stock},
+                success: function(data){
+                    console.log(data['available_units'])
+                    if (data['available_units'] > 0) {
+                        $('.trading-form').find('.user-stock-value').text(data['available_units']);
+                        $('.trading-form').find('.stock-action-div').html('<button class="btn btn-danger waves-effect" type="button" name="buy" id="sell-stock-action">Sell</button>');
+                    } else {
+                        $('.trading-form').find('.user-stock-value').text(data['available_units']);
+                        $('.trading-form').find('.stock-action-div').html('<button class="btn btn-danger waves-effect" type="button" name="buy" id="sell-stock-action" disabled>Sell</button>');
+                    }
+                }
+            });
+        }
+    }
+
+    $(document).ready(function(){
+        var mode = "";
+        $('select').niceSelect();
+        loadOptions($("#market-select").val());
+        loadStockChart($('#stock-select').val());
+        loadPortfolioChart();
+
+        $("#market-select").on('change', function(){
+            var selected_market = $(this).val();
+            loadOptions(selected_market);
+        });
+
+        $(document).on('change', '#stock-select', function(){
+            console.log($(this).val());
+            loadStockChart($(this).val());
+            $('#stock-quantity').val(0);
+            $('#stock-value').val(0);
+            if(mode == "sell") {
+                updateTradeForm(mode);
+            }
+        });
+
+        $(document).on('click', '#stock-buy-btn', function(){
+            console.log("buy");
+            mode = "buy";
+            $('.trading-form').css({"display": "block"});
+            updateTradeForm(mode);
+        }); 
+
+        $(document).on('click', '#stock-sell-btn', function(){
+            mode = "sell";
+            console.log("sell");
+            $('.trading-form').css({"display": "block"});
+            updateTradeForm(mode);
+
+        });
+
+        $(document).on('keyup', '#stock-quantity', function(){
+            var quantity = $(this).val();
+            var user_option = $('.user-stock-description').text();
+            if (user_option == 'Available Units'){
+                var units = parseFloat($('.user-stock-value').text());
+                if (units < quantity) {
+                    $('#sell-stock-action').prop('disabled', true);
+                } else{
+                    $('#sell-stock-action').prop('disabled', false);
+                }
+            };            
+            if (quantity) {
+                updateStockValue(quantity);
+            } else {
+                $('#stock-value').val(0);
+            }
+        });
+
+        $(document).on('keyup', '#stock-value', function(){
+            console.log('changed');
+            stock_value = $(this).val();
+            if(stock_value) {
+                updateStockQuantity(stock_value)
+            } else {
+                $('#stock-quantity').val(0);
+            }
+        });
+
+        $(document).on('click', '#buy-stock-action', function() {
+            buyStocks();
+        });
+
+        $(document).on('click', '#sell-stock-action', function() {
+            sellStocks();
+        });
+    });
+</script>
+{% endblock %}

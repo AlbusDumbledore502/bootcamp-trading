@@ -3,11 +3,17 @@ from django.views import View
 from django.http import HttpResponse, JsonResponse
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.forms.models import model_to_dict
+from django.db.models import Sum
+from rest_framework.views import APIView
+from rest_framework.response import Response
+import yfinance as yf
+from datetime import datetime, date
 
 from .models import *
 from .forms import *
-
-
+from utils import date_to_timestamp
 
 # Create your views here.
 class HomeView(View):
@@ -94,3 +100,196 @@ class SignUpView(View):
             return redirect('home')
         else:
             return render(request, 'main/register.html', {'registration_form': registration_form})
+
+
+class DashboardView(LoginRequiredMixin, View):
+    """
+    View to power dashboard.
+    Access limited to logged in users only.
+    """
+    login_url = '/home/'
+    def get(self, request):
+        """
+        Gets all the trade history record for the user which made the request, essentially
+        logged in user.
+
+        **Template**
+            :template: 'main/dashboard.html'
+
+        **user_account**
+            an instance of UserAccount Model
+        **trade_history**
+            queryset/collection of instances of TradeHistory Model, thus a collection
+            of trade history records for the user.
+
+        """
+        user_account = UserAcount.objects.get(user=request.user) 
+        trade_history = TradeHistory.objects.filter(user=request.user)
+        return render(request, 'main/dashboard.html', {'user_account': user_account, 'trade_history': trade_history})
+
+class ManageUsersView(UserPassesTestMixin, View):
+    """
+    View to handle users management providing functionality to reset user's account.
+    Access is limited to users with admin privileeges only.
+    """
+    def test_func(self):
+        """
+        Test to make sure the access in limited to users with staff privileges.
+        """
+        return self.request.user.is_staff
+
+    def get(self, request):
+        """
+        Renders manage users page with all the users without admin privileges, that is users
+        who are going to trade on the website.
+
+        **Template**
+            :template: 'main/manage_users.html'
+
+        """
+        users = User.objects.filter(is_staff=False)
+        return render(request, 'main/manage_users.html', {'users': users})
+    
+    def post(self, request):
+        """
+        Handles POST request from manage users page.
+        Checks if "reset" button had been clicked first and if found so, will 
+        fetch the user id for which reset is supposed to be done from the POST
+        data and will reset the account essentially resetting the balance to 
+        1000(currently hardcoded, can be made configurable).
+
+        **user_account**
+            an instance of UserAccount model.
+        """
+        if 'reset' in request.POST:
+            reset_id = int(request.POST['reset'])
+            user = User.objects.get(id=reset_id)
+            user_account = UserAcount.objects.filter(user=user)
+            if user_account.exists():
+                user_account = user_account.first()
+                user_account.balance = 1000
+                user_account.save()
+        return redirect('manage_users')
+
+class StockAPIView(APIView):
+    """
+    API to fetch a stock's historical data and return in a structured manner to
+    be used in the front-end. API will be using Yahoo Finance data, leveraged using 
+    "yfinance" library.
+    """
+    def get(self, request):
+        """
+        The API will get the stock name from request data and then get the histoical data 
+        for the stock from yfinance. Postprocessing of the fetched data, which happens
+        to be a pandas dataframe, involves:
+            # Coversion of datetime objects totimestamp
+            # rounding all the prices and data to float with two decimal places.
+        
+        Return:
+            ohlc : Arrays of [Date, Open, High, Low, Close]
+            volume: Arrays of [Date, Volume]
+
+        Assumption:
+            Working with historical data, it is assumed that stock will be traded at last
+            trading day's closing price.
+        """
+        stock = request.GET['stock']
+        stock_ticker = yf.Ticker(stock)
+        hist = stock_ticker.history(period='30d')
+        hist.drop(['Dividends', 'Stock Splits'], axis=1, inplace=True)
+        hist['Date'] = hist.index
+        ohlc = []
+        volume = []
+        hist['Date'] = hist['Date'].apply(lambda x: int(datetime.strptime(str(x),'%Y-%m-%d %H:%M:%S').timestamp() * 1000))
+        hist['Open'] = hist['Open'].apply(lambda x: round(x, 2))
+        hist['High'] = hist['High'].apply(lambda x: round(x, 2))
+        hist['Low'] = hist['Low'].apply(lambda x: round(x, 2))
+        hist['Close'] = hist['Close'].apply(lambda x: round(x, 2))
+        for row in hist.itertuples(index=True, name="Pandas"):
+            ohlc.append([row.Date, row.Open, row.High, row.Low, row.Close])
+            volume.append([row.Date, row.Volume])
+        unit_price = ohlc[-1][4]
+        data = {'ohlc': ohlc, 'volume': volume, 'unit_price': unit_price}
+        return JsonResponse(data)
+
+class UserStockAPIView(APIView):
+    """
+    API to fetach User's trade history for a cerating stock.
+    Return number of availbale(units) stock for a user.
+    """
+    def get(self, request):
+        """
+        Gets the stock for which user details is to be fetched from request data.
+
+        Returns:
+            available_units: Number of units of a certain stock available with user
+        
+        **stocks_trded**
+            Collection/Queryset of all the available trade records of the user for the
+            requested stock.
+
+        """
+        stock = request.GET['stock']
+        stocks_traded = TradeHistory.objects.filter(user=request.user, stock=stock)
+        bought_stocks = stocks_traded.filter(type="Buy").aggregate(Sum('units'))['units__sum']
+        sold_stocks = stocks_traded.filter(type="Sold").aggregate(Sum('units'))['units__sum']
+        if sold_stocks:
+            available_units = bought_stocks - sold_stocks
+        else:
+            available_units = bought_stocks
+        return JsonResponse({'available_units': available_units})
+
+class UserPortfolioAPIView(APIView):
+    """
+    Returns user's portfolio data to power portfolio chart on the front-end.
+    """
+    def get(self, request):
+        portfolios = UserPortfolio.objects.filter(user=request.user).order_by('date')
+        user_data = [[date_to_timestamp(portfolio.date), portfolio.balance] for portfolio in portfolios]
+        return JsonResponse({'portfolio': user_data})
+
+class BuyStocksAPIView(APIView):
+    """
+    API to handle buying functionality for stocks. This will enter buying record for 
+    the user in TradeHistory table and will update the balance.
+    Return updated balance for the user and trade details in dictionary form.
+    """
+    def get(self, request):
+        trade = TradeHistory.objects.create(
+            user =request.user,
+            stock = request.GET['stock'],
+            type = 'Buy',
+            payment_mode = 'Card',
+            payment_description = '*******5264',
+            units =  float(request.GET['quantity']),
+            unit_price = float(request.GET['unit_price']),
+            total_price = float(request.GET['value']),
+            date = date.today()
+        )
+        user_account = UserAcount.objects.get(user=request.user)
+        user_account.balance = round((user_account.balance - float(request.GET['value'])), 2)
+        user_account.save()
+        return JsonResponse({'updated_balance': user_account.balance, 'trade': model_to_dict(trade)})
+
+class SellStocksAPIView(APIView):
+    """
+    API to handle selling functionality for stocks. This will enter selling record for 
+    the user in TradeHistory table and will update the balance.
+    Return updated balance for the user and trade details in dictionary form.
+    """
+    def get(self, request):
+        trade = TradeHistory.objects.create(
+            user =request.user,
+            stock = request.GET['stock'],
+            type = 'Sold',
+            payment_mode = 'Card',
+            payment_description = '*******5264',
+            units =  float(request.GET['quantity']),
+            unit_price = float(request.GET['unit_price']),
+            total_price = float(request.GET['value']),
+            date = date.today()
+        )
+        user_account = UserAcount.objects.get(user=request.user)
+        user_account.balance = round((user_account.balance + float(request.GET['value'])), 2)
+        user_account.save()
+        return JsonResponse({'updated_balance': user_account.balance, 'trade': model_to_dict(trade)})
