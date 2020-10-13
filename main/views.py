@@ -5,6 +5,8 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 
 from .models import *
+from .forms import *
+
 
 
 # Create your views here.
@@ -46,3 +48,49 @@ class HomeView(View):
             messages.warning(request, 'Incorrect credentials!')
             return redirect('home')
         return HttpResponse()
+
+class LogoutView(View):
+    """
+    View to handle logout request.
+    """
+    def get(self, request):
+        logout(request)
+        return redirect('home')
+
+
+class SignUpView(View):
+    """
+    View to handle sign up.
+    """
+    def get(self, request):
+        """
+        Renders the sign up page for new users to sign in.
+
+        **Template**
+            :template: 'main/register.html'
+        
+        **registration_form**
+            An instance of UserRegistrationForm(ModelForm bound to User model).
+
+        """
+        registration_form = UserRegistrationFrom()
+        return render(request, 'main/register.html', {'registration_form': registration_form})
+    
+    def post(self, request):
+        """
+        Handles POST request for signup.
+
+        If inputs given by user in the form is valid, a new user will be created
+        and the user will be redirected to the home page with success message.
+
+        In case form in invalidated, same form will be renderd with error description.
+
+        """
+        registration_form= UserRegistrationFrom(request.POST)
+        if registration_form.is_valid():
+            user = registration_form.save()
+            UserAcount.objects.create(user=user, balance=1000)
+            messages.success(request, 'Account cretaed successfully. Please login.')
+            return redirect('home')
+        else:
+            return render(request, 'main/register.html', {'registration_form': registration_form})
