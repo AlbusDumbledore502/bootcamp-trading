@@ -1,0 +1,93 @@
+{% extends 'main/base.html' %}
+{% block content %}
+{% include 'main/layouts/home_navbar.html' %}
+<div clas="intro" data-scroll-index="0">
+    <div class="container home-intro">
+        {% if messages %}
+            {% for message in messages %}
+                {% if message.tags == "warning" %}
+                    <div class="alert alert-danger" role="alert">
+                {% elif message.tags == "success" %}
+                    <div class="alert alert-success" role="alert">
+                {% endif %}
+                {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+        <div class="row justify-content-between align-items-center">
+            <div class="col-xl-6 col-lg-6 col-12">
+                <div class="intro-content">
+                    <h1 class="intro-heading">
+                        Invest with
+                        <strong class="text-primary">Bootcamp</strong>
+                        .
+                        <br>
+                        Invest in your furture
+                    </h1>
+                    <p>
+                        Online platform to invest in stocks, derivatives, funds, and more 
+                    </p>
+                </div>
+            </div>
+            <div class="col-xl-5 col-lg-6 col-12">
+                <div class="sign-in">
+                    <form class="sign-in-form" method="POST">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <div class="input-group mb-3">
+                                <input type="text" name="username" class="form-control" value="" placeholder="Username">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="input-group mb-3">
+                                <input type="password" name="password" class="form-control" value="" placeholder="Password">
+                            </div>
+                        </div>
+                        <button type="submit" name="submit" class="btn btn-success btn-block">
+                            Sign In
+                            <i class="la la-arrow-right"></i>
+                        </button>
+                        <a class="btn btn-primary btn-block" href="{% url 'sign_up' %}">
+                            Sign Up
+                        </a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- <div class="portfolio section-padding" data-scroll-index="1">
+    <div class="container">
+        <div class="row py-lg-5 justify-content-center">
+            <div class="col-xl-7">
+                <div class="section-title text-center">
+                    <h2>Create your portfolio today</h2>
+                    <p>Bootcamp has a variety of features that make it the best place to start trading</p>
+                </div>
+            </div>
+        </div> -->
+        <!-- <div class="row align-items-center justify-content-between">
+            <div class="col-xl-7 col-lg-6">
+                <div class="portfolio-list">
+                    <div class="row">
+                        <div class="col-xl-6">
+                            <div class="media">
+                                <span class="port-icon">
+                                    <i class="la la-bar-chart">
+                                    </i>
+                                </span>
+                                <div class="media-body">
+                                    <h4>Manage your portfolio</h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div> -->
+    <!-- </div>
+</div> -->
+{% endblock %}
+{% block customjs %}
+
+{% endblock %}
