@@ -125,7 +125,11 @@ class DashboardView(LoginRequiredMixin, View):
         """
         user_account = UserAcount.objects.get(user=request.user) 
         trade_history = TradeHistory.objects.filter(user=request.user)
-        return render(request, 'main/dashboard.html', {'user_account': user_account, 'trade_history': trade_history})
+        markets = list(Stock.objects.values_list('market', flat=True).distinct())
+        stocks  = {}
+        for market in markets:
+            stocks[market] = list(Stock.objects.filter(market=market).values_list('stock', flat=True).distinct())
+        return render(request, 'main/dashboard.html', {'user_account': user_account, 'trade_history': trade_history, 'markets': markets, 'stocks': stocks})
 
 class ManageUsersView(UserPassesTestMixin, View):
     """
@@ -170,6 +174,26 @@ class ManageUsersView(UserPassesTestMixin, View):
                 user_account.balance = 1000
                 user_account.save()
         return redirect('manage_users')
+
+class ManageStocksView(View):
+
+    def get(self, request):
+        stock_form = StockRegistrationForm()
+        registered_stocks = Stock.objects.all()
+        return render(request, 'main/stock_registration.html', {'stock_form':stock_form, 'registered_stocks': registered_stocks})
+    
+    def post(self, request):
+        if "delete" in request.POST:
+            stock_id = int(request.POST['delete'])
+            Stock.objects.get(id=stock_id).delete()
+            return redirect('manage_stocks')
+        else:
+            stock_form = StockRegistrationForm(request.POST)
+            if stock_form.is_valid():
+                stock_form.save()
+                return redirect('manage_stocks')
+            else:
+                return render(request, 'main/stock_registration.html', {'stock_form':stock_form})
 
 class StockAPIView(APIView):
     """

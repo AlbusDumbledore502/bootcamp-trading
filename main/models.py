@@ -10,6 +10,13 @@ class UserAcount(models.Model):
     def __str__(self):
         return self.user.username
 
+class Stock(models.Model):
+    market = models.CharField(max_length=50)
+    stock = models.CharField(max_length=50)
+
+    def __str__(self):
+        return self.stock
+
 class UserPortfolio(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, blank=True, null=True)
     date = models.DateField()

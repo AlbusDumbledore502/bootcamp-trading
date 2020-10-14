@@ -1,0 +1,72 @@
+{% extends 'main/base.html' %}
+{% load widget_tweaks %}
+{% block content %}
+    {% include 'main/layouts/user_navbar.html' %}
+        <div class="container home-intro">
+            <div class="row justify-content-between align-items-center">
+                <div class="col-xl-12 col-lg-12 col-12">
+                    <form method="POST">
+                        {% csrf_token %}
+                        <div class="sign-in">
+                            <div class="form-group">
+                                <div class="input-group mb-3">
+                                    {% render_field stock_form.market class="form-control" placeholder="First Name" %}
+                                    {% render_field stock_form.stock class="form-control" placeholder="Enter stock name" %}
+                                </div>
+                            </div>
+                            <span>
+                                {{ stock_form.market.errors }}
+                                {{ stock_form.stock.errors }}
+                            </span>
+                            <button type="submit" class="btn btn-success btn-block">
+                                Register
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                <div class="col-xl-12 col-lg-12 col-md-12 col-xxl-12">
+                    <div clss="card">
+                        <div class="card-body">
+                            <div class="card-header">
+                                <h4 class="card-title">Registered Stocks</h4>
+                            </div>
+                            <div class="transaction-table">
+                                <div class="table-responsive">
+                                    <table class="table table-dark">
+                                        <thead>
+                                        <tr>
+                                            <th scope="col">#</th>
+                                            <th scope="col">Market</th>
+                                            <th scope="col">Stock</th>
+                                            <th scope="col"></th>
+                                        </tr>
+                                        </thead>
+                                        <form method="POST">
+                                            {% csrf_token %}
+                                            <tbody>
+                                                {% for stock in registered_stocks %}
+                                                    <tr>
+                                                        <th scope="row">{{ stock.id }}</th>
+                                                        <td>{{ stock.market }}</td>
+                                                        <td>{{ stock.stock }}</td>
+                                                        <td><button type="submit" name="delete" value="{{ stock.id }}" class="btn btn-danger">Delete</button></td>
+                                                    </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </form>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+{% endblock %}
+{% block customjs %}
+<script>
+    $(document).ready(function(){
+        $('select').niceSelect();
+    });
+</script>
+{% endblock %}

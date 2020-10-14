@@ -15,7 +15,9 @@
                                         <div class="form-group">
                                             <div class="input-group mb-3">
                                                 <select name="market" id="market-select" class="form-control mw-200" style="display: none;">
-                                                    <option value="NASDAQ">NASDAQ</option>
+                                                    {% for market in markets %}
+                                                        <option value="{{ market }}">{{ market }}</option>
+                                                    {% endfor %}
                                                 </select>
                                                 <select name="stock" id="stock-select" class="form-control mw-200" style="display: none;">
                                                 </select>
@@ -170,9 +172,7 @@
 
     function loadOptions(market){
 
-        var options = {
-            'NASDAQ': ["MSFT", "AAPL"]
-        };
+        var options = {{ stocks|safe }}
 
         stock_options = options[market];
         html_str = "";
