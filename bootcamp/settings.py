@@ -78,8 +78,12 @@ WSGI_APPLICATION = 'bootcamp.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'd19dhm607kdok2',
+        'HOST': 'ec2-34-237-247-76.compute-1.amazonaws.com',
+        'PORT': 5432,
+        'USER': 'dwswuyhjaohfjy',
+        'PASSWORD': '7ba0de043a8da01a9457f0b9d5de25a6bffe5e7883da03535116dc2c6187e433'
     }
 }
 
